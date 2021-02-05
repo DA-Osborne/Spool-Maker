@@ -15,8 +15,9 @@ Install Instructions (Running from script):
 1. Extract the python scripts to a folder of your choice, and open a terminal/powershell/cmd window in this folder.
 
 2. Install dependencies with the following command:
-	Windows: 'pip3 install PyQt5 numpy pyscard crc8 ndef nfcpy'
-	MacOS/Linux: 'sudo pip3 install PyQt5 numpy pyscard crc8 ndef nfcpy'
+
+Windows: 'pip3 install PyQt5 numpy pyscard crc8 ndef nfcpy'
+MacOS/Linux: 'sudo pip3 install PyQt5 numpy pyscard crc8 ndef nfcpy'
 
 3. Run the following command to launch: 'python3 SpoolMaker.py'
 
