@@ -2,7 +2,7 @@
 """ CuraMaterial - A package for reading installed Cura Materials.
 A part of the Spool Maker package.
 
-Dale A. Osborne, 2020
+Dale A. Osborne, 2021
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,20 +18,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 # To-Do:
-# - Auto detect OS X and Linux Cura directories. (I don't have acess to these OS' at the moment)
+# - Add Linux Cura SYS directory.
 
 
 
 # /---------------------------------\
 #|          Import Modules           |
 # \---------------------------------/
-import sys
 import os
 import re
 import platform
-
-from winreg import OpenKey, HKEY_LOCAL_MACHINE, QueryValueEx
-
+from pathlib import Path
 
 
 # /---------------------------------\
@@ -39,28 +36,51 @@ from winreg import OpenKey, HKEY_LOCAL_MACHINE, QueryValueEx
 # \---------------------------------/
 # Windows
 if platform.system() == 'Windows':
+    from winreg import HKEY_LOCAL_MACHINE, KEY_READ, OpenKey, QueryValueEx, EnumKey, QueryInfoKey
+    
+    def getLatestKey(hKey):
+        curaList = []
+        for i in range(0, QueryInfoKey(hKey)[0]):
+            curaList.append(EnumKey(hKey, i))
+        
+        fList = [k for k in curaList if 'Ultimaker Cura' in k]
+        fList.sort()
+        return fList[-1]
+    
     # Get Cura User Directory
     CURA_USER_DIR = os.path.join(os.getenv('APPDATA'), 'cura')
     CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir()]
     CURA_CONFIGS.sort()
     CURA_USER_MAT_DIR = os.path.join(CURA_USER_DIR, CURA_CONFIGS[-1], 'materials')
 
-    # Set Cura Install Directory
-    curaSysDir = OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\WOW6432Node\\Ultimaker B.V.\\Ultimaker Cura 4.7')
+    # Get Cura Install Directory
+    latestInstalled = getLatestKey(OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\WOW6432Node\\Ultimaker B.V.', 0, KEY_READ))
+    curaSysDir = OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\WOW6432Node\\Ultimaker B.V.\\' + latestInstalled, 0, KEY_READ)
     CURA_INSTALL_DIR = QueryValueEx(curaSysDir, '')[0]
     CURA_MAT_DIR = os.path.join(CURA_INSTALL_DIR, 'resources', 'materials')
 
 elif platform.system() == 'Darwin': # OS X
-    # Replace with your user and system materials folders
-    CURA_USER_MAT_DIR = '/Users/user/Library/Application\\ Support/Cura/4.7/'
-    CURA_MAT_DIR = ''
+    # Get Cura User Directory
+    CURA_USER_DIR = str(Path.home()) + '/Library/Application Support/cura/'
+    CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir()]
+    CURA_CONFIGS.sort()
+    CURA_USER_MAT_DIR = os.path.join(CURA_USER_DIR, CURA_CONFIGS[-1], 'materials')
+    
+    # Set Cura Install Directory
+    CURA_MAT_DIR = '/Applications/Ultimaker Cura.app/Contents/Resources/resources/materials'
 
 elif platform.system() == 'Linux':
-    # Replace with your user and system materials folders
-    CURA_USER_MAT_DIR = '/home/user/.local/share/cura/4.7/materials'
+    # Get Cura User Directory
+    CURA_USER_DIR = str(Path.home()) + '/.local/share/cura/'
+    CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir()]
+    CURA_CONFIGS.sort()
+    CURA_USER_MAT_DIR = os.path.join(CURA_USER_DIR, CURA_CONFIGS[-1], 'materials')
+    
+    # Set Cura Install Directory
     CURA_MAT_DIR = ''
+
 else:
-    print('Unknown operating system')
+    print('Unknown operating system. To override, remove the exit(1) command from the CuraMaterial script.')
     exit(1)
 
 print('User Material Directory: ', CURA_USER_MAT_DIR)

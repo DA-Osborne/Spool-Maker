@@ -5,7 +5,7 @@ Compatible with NTAG216 MIFARE Ultralight.
 
 Uses PyQt5 for GUI, or can be run from a terminal using the customisable variables at the end.
 
-Dale A. Osborne, 2020
+Dale A. Osborne, 2021
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -95,9 +95,32 @@ class Ui(QtWidgets.QMainWindow):
         self.btnWrite = self.findChild(QtWidgets.QPushButton, 'btn_write')
         self.btnWrite.clicked.connect(self.writeTag)
 
+        # Menu Actions
+        self.actionExit = self.findChild(QtWidgets.QAction, 'actionExit')
+        self.actionExit.triggered.connect(self.exit)
+        self.actionRescan = self.findChild(QtWidgets.QAction, 'actionRescan_Materials')
+        self.actionRescan.triggered.connect(self.rescan)
+        self.actionRead = self.findChild(QtWidgets.QAction, 'actionRead_Tag')
+        self.actionRead.triggered.connect(self.readTag)
+        self.actionWrite = self.findChild(QtWidgets.QAction, 'actionWrite_Tag')
+        self.actionWrite.triggered.connect(self.writeTag)
+
         # Show UI
         self.show()
         self.setStatus('Ready', True)
+
+    def exit(self):
+        print('Exiting')
+        self.close()
+
+    def rescan(self):
+        # Load installed materials
+        print('Reloading Cura materials...', end = '')
+        self.curaMaterials, self.mList = c.get_all_materials()
+        self.materialSelect.clear()
+        if self.mList is not None:
+            self.materialSelect.addItems(self.mList)
+        print('Done!')
 
     def materialSelectionChange(self, i):
         self.infoBrand.setText(self.curaMaterials[i].brand)

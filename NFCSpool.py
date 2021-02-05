@@ -7,7 +7,7 @@ for use by the Spool Maker GUI.
 
 Developed from scripts by: @gandy, Ultimaker Public Forum, 2020
 
-Dale A. Osborne, 2020
+Dale A. Osborne, 2021
 
 Useful Links used to construct this as a GUI:
 https://community.ultimaker.com/topic/19648-readwrite-nfc-tags/
