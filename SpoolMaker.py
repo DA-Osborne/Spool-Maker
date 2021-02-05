@@ -31,7 +31,7 @@ import sys
 import os
 import time
 
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtWidgets, QtGui, uic
 
 import CuraMaterial as c
 import NFCSpool as s
@@ -53,6 +53,7 @@ class Ui(QtWidgets.QMainWindow):
     def __init__(self):
         super(Ui, self).__init__()
         uic.loadUi(resource_path('gui.ui'), self)
+        self.setWindowIcon(QtGui.QIcon(resource_path('icon.ico')))
 
         # Load installed materials
         self.curaMaterials, self.mList = c.get_all_materials()
@@ -130,6 +131,7 @@ class Ui(QtWidgets.QMainWindow):
     
     def readTag(self):
         print('Reading Tag...')
+        self.setStatus('Waiting for tag...', False)
         cardStatus, uid, guid, total, remain, time = s.readSpool(ui=True)
         if uid is not None:
             self.tagSerial.setText(':'.join([uid[i:i+2] for i,j in enumerate(uid) if not (i%2)]))
@@ -160,10 +162,10 @@ class Ui(QtWidgets.QMainWindow):
         unit = 2#mg
         weight = int(self.newWeight.text())
         s.writeSpool(guid, unit, weight)
-        self.setStatus('Tag Write Successful', True)
         time.sleep(1) # Wait 1 second
         self.readTag() # Read tag which should now contain the new data
-
+        self.setStatus('Tag Write Successful', True)
+        
     def setStatus(self, text:str, colorOn:bool):
         self.status.setText(text)
         if colorOn:
