@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-""" CuraMaterial - A package for reading installed Cura Materials.
+''' CuraMaterial - A package for reading installed Cura Materials.
 A part of the Spool Maker package.
-
-Dale A. Osborne, 2021
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -16,19 +14,22 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
-# To-Do:
-# - Add Linux Cura SYS directory.
-
-
+'''
 
 # /---------------------------------\
 #|          Import Modules           |
 # \---------------------------------/
 import os
+
 import re
 import platform
 from pathlib import Path
+
+__author__ = 'Dale A. Osborne'
+__copyright__ = 'Copyright 2021, Dale Osborne'
+__license__ = 'GPL'
+__version__ = '1.1.0'
+
 
 
 # /---------------------------------\

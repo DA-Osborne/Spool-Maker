@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-""" Spool Maker - A package for reading/writing Ultimaker compatible NFC filament tags.
-Requires a smartcard reader/writer. Tested with the ACR122U-A9 on Windows 10, b2004.
+''' Spool Maker - A package for reading/writing Ultimaker compatible NFC filament tags.
+Requires a smartcard reader/writer. Tested with the ACR122U-A9 on Windows 10, 21H1.
 Compatible with NTAG216 MIFARE Ultralight.
 
 Uses PyQt5 for GUI, or can be run from a terminal using the customisable variables at the end.
-
-Dale A. Osborne, 2021
+Note: Connect the reader before loading the application!
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,10 +18,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
-# Note: On Windows, the reader must be connected before loading the application.
-
-
+'''
 
 # /---------------------------------\
 #|          Import Modules           |
@@ -36,12 +32,19 @@ from PyQt5 import QtWidgets, QtGui, uic
 import CuraMaterial as c
 import NFCSpool as s
 
+__author__ = 'Dale A. Osborne'
+__copyright__ = 'Copyright 2021, Dale Osborne'
+__license__ = 'GPL'
+__version__ = '1.1.0'
+
+
+
 # Resource loader for loading UI file with PyInstaller dist
 def resource_path(relPath):
     try:
         basePath = sys._MEIPASS
     except Exception:
-        basePath = os.path.abspath(".")
+        basePath = os.path.abspath('.')
     return os.path.join(basePath, relPath)
 
 
@@ -129,9 +132,10 @@ class Ui(QtWidgets.QMainWindow):
         self.infoColor.setText(self.curaMaterials[i].color)
         self.infoGUID.setText(self.curaMaterials[i].guid)
     
-    def readTag(self):
+    def readTag(self, post_write=False):
         print('Reading Tag...')
-        self.setStatus('Waiting for tag...', False)
+        if not post_write:
+            self.setStatus('Waiting for tag...', False)
         cardStatus, uid, guid, total, remain, time = s.readSpool(ui=True)
         if uid is not None:
             self.tagSerial.setText(':'.join([uid[i:i+2] for i,j in enumerate(uid) if not (i%2)]))
@@ -147,15 +151,22 @@ class Ui(QtWidgets.QMainWindow):
                 self.tagBrand.setText(materialData[0])
                 self.tagMaterial.setText(materialData[1])
                 self.tagColor.setText(materialData[2])
+                if not post_write:
+                    self.setStatus('Tag Read Successful', True)
 
             elif cardStatus == 1:
                 self.tagStatus.setText('Blank Tag/Unknown Data')
-            self.setStatus('Tag Read Successful', True)
+                if not post_write:
+                    self.setStatus('Tag Read Successful', True)
+
+            elif cardStatus == 2:
+                print('Tag was removed early')
+                self.setStatus('Tag Removed!', False)
         else:
             print('Read timed out')
             self.setStatus('Tag Read Timed Out', False)
 
-    def writeTag(self): # Need to add read spool after write to update tag info on screen
+    def writeTag(self):
         print('Writing Tag...')
         self.setStatus('Writing New Tag...', False)
         guid = self.curaMaterials[self.materialSelect.currentIndex()].guid
@@ -163,8 +174,8 @@ class Ui(QtWidgets.QMainWindow):
         weight = int(self.newWeight.text())
         s.writeSpool(guid, unit, weight)
         time.sleep(1) # Wait 1 second
-        self.readTag() # Read tag which should now contain the new data
         self.setStatus('Tag Write Successful', True)
+        self.readTag(True) # Read tag which should now contain the new data
         
     def setStatus(self, text:str, colorOn:bool):
         self.status.setText(text)

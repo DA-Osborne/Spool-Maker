@@ -21,8 +21,7 @@ Install Instructions (Running from script):
 1. Extract the python scripts to a folder of your choice and open a Terminal/PowerShell/CMD window in this folder.
 
 2. Install dependencies with the following command:
-    - Windows: 'pip3 install PyQt5 numpy pyscard crc8 ndef nfcpy'
-    - MacOS/Linux: 'sudo pip3 install PyQt5 numpy pyscard crc8 ndef nfcpy'
+    - 'pip3 install PyQt5 numpy pyscard crc8 ndef nfcpy'
 
 3. Plug in your smartcard reader (if you do not do this first, you can sometimes get an exception)
 

@@ -7,8 +7,6 @@ for use by the Spool Maker GUI.
 
 Developed from scripts by: @gandy, Ultimaker Public Forum, 2020
 
-Dale A. Osborne, 2021
-
 Useful Links used to construct this as a GUI:
 https://community.ultimaker.com/topic/19648-readwrite-nfc-tags/
 https://forum.dangerousthings.com/t/introduction-to-smart-card-development-on-the-desktop-guide/2744
@@ -43,8 +41,13 @@ from smartcard import util
 import uuid
 from binascii import hexlify
 from crc8 import crc8
-import ndef
+from ndef import record, message_encoder, message_decoder
 import uuid
+
+__author__ = 'Dale A. Osborne'
+__copyright__ = 'Copyright 2021, Dale Osborne'
+__license__ = 'GPL'
+__version__ = '1.1.0'
 
 
 
@@ -61,7 +64,7 @@ fail = util.toBytes('63 00')
 notSupported = util.toBytes('6A 81')
 
 TIMEOUT = 30 # How long to wait for a card in seconds
-
+DEFAULT_SERIAL = '00:00:00:00:00:00:00'
 
 
 # /---------------------------------\
@@ -70,15 +73,15 @@ TIMEOUT = 30 # How long to wait for a card in seconds
 class MustBeEvenException(Exception):
     pass
 
-class UltimakerMaterialRecord(ndef.record.GlobalRecord):
+class UltimakerMaterialRecord(record.GlobalRecord):
 
     _type = 'urn:nfc:ext:ultimaker.nl:material'
     _name = '1'
 
     NO_MATERIAL = uuid.UUID('00000000-0000-0000-0000-000000000000')
 
-    def __init__(self, material_id=None, serial="", version=0, compat_version=0,
-                 manufacturing_ts=0, station_id=0, batch_code=""):
+    def __init__(self, material_id=None, serial='', version=0, compat_version=0,
+                 manufacturing_ts=0, station_id=0, batch_code=''):
         self._version = version
         self._compatibility_version = compat_version
         self._serial_number = serial
@@ -89,12 +92,12 @@ class UltimakerMaterialRecord(ndef.record.GlobalRecord):
 
     def _encode_payload(self):
         data = self._encode_struct('>BB', self._version, self._compatibility_version)
-        serial = self._serial_number.encode("utf-8") + b'\x00'*14
+        serial = self._serial_number.encode('utf-8') + b'\x00'*14
         data += serial[:14]
         data += self._encode_struct('>Q', self._manufacturing_timestamp)
         data += self._material_id.bytes
-        data += self._encode_struct(">H", self._programming_station_id)
-        data += self._batch_code.encode("utf-8")
+        data += self._encode_struct('>H', self._programming_station_id)
+        data += self._batch_code.encode('utf-8')
         data += b'\x00' * 108
 
         return data[0:108]
@@ -103,16 +106,16 @@ class UltimakerMaterialRecord(ndef.record.GlobalRecord):
     def _decode_payload(cls, octets, errors):
 
         version, compat_version = cls._decode_struct('>BB', octets[0:2])
-        serial_number = octets[2:16].decode("utf-8").split("\x00")[0]
-        manufacturing_timestamp = cls._decode_struct(">Q", octets[16:24])
+        serial_number = octets[2:16].decode('utf-8').split('\x00')[0]
+        manufacturing_timestamp = cls._decode_struct('>Q', octets[16:24])
         material_id = uuid.UUID(bytes=octets[24:40])
-        programming_station_id = cls._decode_struct(">H", octets[40:42])
-        batch_code = octets[42:106].decode("utf-8").split("\x00")[0]
+        programming_station_id = cls._decode_struct('>H', octets[40:42])
+        batch_code = octets[42:106].decode('utf-8').split('\x00')[0]
 
         return cls(material_id, serial_number, version, compat_version,
                    manufacturing_ts=manufacturing_timestamp, station_id=programming_station_id, batch_code=batch_code)
 
-class UltimakerStatRecord(ndef.record.GlobalRecord):
+class UltimakerStatRecord(record.GlobalRecord):
 
     _type = 'urn:nfc:ext:ultimaker.nl:stat'
     _name = '2'
@@ -130,7 +133,7 @@ class UltimakerStatRecord(ndef.record.GlobalRecord):
         self._material_total = material_total
         self._material_remaining = material_remaining if material_remaining is not None else material_total
         self._total_usage_duration = total_usage_duration
-        self._unit = ["N/A", "mm", "mg", "cm³"][self._material_unit]
+        self._unit = ['N/A', 'mm', 'mg', 'cm³'][self._material_unit]
 
     def _encode_payload(self):
         data = self._encode_struct('>BBBLLQ', self._version, self._compatibility_version, int(self._material_unit),
@@ -147,12 +150,12 @@ class UltimakerStatRecord(ndef.record.GlobalRecord):
 
         crc = crc8(octets[:19]).digest()[0]
         if octets[19] != crc:
-            print("  **** crc mismatch: tag={} self={}".format(octets[19], crc))
+            print('  **** crc mismatch: tag={} self={}'.format(octets[19], crc))
 
         return cls(material_total=material_total, material_unit=material_unit, material_remaining=material_remaining,
                    total_usage_duration=total_usage_duration, version=version, compat_version=compat_version)
 
-class SigRecord(ndef.record.GlobalRecord):
+class SigRecord(record.GlobalRecord):
 
     _type = 'urn:nfc:wkt:Sig'
 
@@ -173,12 +176,12 @@ class MyFilamentSpool:
     def __init__(self, guid, serial, unit=2, weight=750000):
         self.material = UltimakerMaterialRecord(material_id=guid,
                                                 serial=serial,
-                                                batch_code="123456789AB",
+                                                batch_code='123456789AB',
                                                 station_id=0xaffe)
         self.status = UltimakerStatRecord(material_unit=unit, material_total=weight)
 
     def data(self) -> bytes:
-        encoder = ndef.message_encoder()
+        encoder = message_encoder()
         results = list()
         encoder.send(None)
         encoder.send(self.material)
@@ -189,9 +192,9 @@ class MyFilamentSpool:
 
         result = b''.join(results)
         if len(result) % 4 != 0:
-            print("Padding data with {} bytes to full page size.".format(len(result) % 4))
+            print('Padding data with {} bytes to full page size.'.format(len(result) % 4))
             result += b'\x00' * (4-len(result) % 4)
-        print("   Size is now {} bytes, that is {} pages with {} excess.".format(len(result), len(result)//4, len(result) % 4))
+        print('   Size is now {} bytes, that is {} pages with {} excess.'.format(len(result), len(result)//4, len(result) % 4))
 
         return result
 
@@ -200,9 +203,9 @@ class MyFilamentSpool:
 # /---------------------------------\
 #|         Register Classes          |
 # \---------------------------------/
-ndef.Record.register_type(UltimakerMaterialRecord)
-ndef.Record.register_type(UltimakerStatRecord)
-ndef.Record.register_type(SigRecord)
+record.Record.register_type(UltimakerMaterialRecord)
+record.Record.register_type(UltimakerStatRecord)
+record.Record.register_type(SigRecord)
 
 
 
@@ -211,7 +214,7 @@ ndef.Record.register_type(SigRecord)
 # \---------------------------------/
 def decode(octets, ui=False):
     '''Decodes UM spool binary to records'''
-    records = ndef.message_decoder(octets, errors='relax')
+    records = message_decoder(octets, errors='relax')
 
     if ui:
         r_guid = ''
@@ -235,25 +238,25 @@ def decode(octets, ui=False):
     else:
         try:
             for record in records:
-                print(record, "length is", len(record.data))
+                print(record, 'length is', len(record.data))
                 # print("   ", "\n    ".join([record.data[i:i+4].hex() for i in range(0, len(record.data), 4)]))
 
                 if type(record) is UltimakerMaterialRecord:
-                    print("     GUID:", record._material_id)
-                    print("     version:", record._version)
-                    print("     compatibility_version:", record._compatibility_version)
-                    print("     serial_number:", record._serial_number)
-                    print("     manufacturing_timestamp:", record._manufacturing_timestamp)
-                    print("     programming_station_id:", record._programming_station_id)
-                    print("     batch_code:", record._batch_code)
+                    print('     GUID:', record._material_id)
+                    print('     version:', record._version)
+                    print('     compatibility_version:', record._compatibility_version)
+                    print('     serial_number:', record._serial_number)
+                    print('     manufacturing_timestamp:', record._manufacturing_timestamp)
+                    print('     programming_station_id:', record._programming_station_id)
+                    print('     batch_code:', record._batch_code)
 
                 if type(record) is UltimakerStatRecord:
-                    print("     version:", record._version)
-                    print("     compatibility_version:", record._compatibility_version)
-                    print("     material_unit:", record._material_unit, "({})".format(record._unit))
-                    print("     material_total:", record._material_total, record._unit)
-                    print("     material_remaining:", record._material_remaining, record._unit)
-                    print("     total_usage_duration:", int(record._total_usage_duration/3600), "h")
+                    print('     version:', record._version)
+                    print('     compatibility_version:', record._compatibility_version)
+                    print('     material_unit:', record._material_unit, '({})'.format(record._unit))
+                    print('     material_total:', record._material_total, record._unit)
+                    print('     material_remaining:', record._material_remaining, record._unit)
+                    print('     total_usage_duration:', int(record._total_usage_duration/3600), 'h')
         except:
             print('Tag contains no records. Is it a blank tag perhaps?')
 
@@ -290,7 +293,7 @@ def writeSpool(id, unit, tw, ui=False):
         uid = util.toHexString(uid_data)
         status = util.toHexString([sw1, sw2])
         serial = hexlify(bytes(uid_data)).decode('latin').upper()
-        print("UID = {}\tstatus = {}\tdata={}".format(uid, status, uid_data))
+        print('UID = {}\tstatus = {}\tdata={}'.format(uid, status, uid_data))
         
         # Create spool data for this tag
         spool = MyFilamentSpool(uuid.UUID(id), serial, unit, tw)
@@ -303,15 +306,15 @@ def writeSpool(id, unit, tw, ui=False):
             recv, sw1, sw2 = connection.transmit(cmd_write_page(page, data))
             
             if not ui:
-                print("[{:02x}] = {}".format(page, util.toHexString(data)))
-                print("[{:02x}] = {}\trecv = {}\tstatus = {}".format(page, util.toHexString(data),
+                print('[{:02x}] = {}'.format(page, util.toHexString(data)))
+                print('[{:02x}] = {}\trecv = {}\tstatus = {}'.format(page, util.toHexString(data),
                                                                  util.toHexString(recv),
                                                                  util.toHexString([sw1, sw2])))
         connection.transmit(beep)
         decode(bytes(tag_data))
 
     except NoCardException:
-        print("ERROR: Card was removed")
+        print('ERROR: Card was removed')
 
 def readSpool(ui=False):
     service = None
@@ -334,7 +337,7 @@ def readSpool(ui=False):
         uid = util.toHexString(uid_data)
         status = util.toHexString([sw1, sw2])
         serial = hexlify(bytes(uid_data)).decode('latin').upper()
-        print("UID = {}\tstatus = {}\tdata={}".format(uid, status, uid_data))
+        print('UID = {}\tstatus = {}\tdata={}'.format(uid, status, uid_data))
 
         data = list()
         tagDataLength = 300 # Ultimaker doesn't write past ~225 anyway so read to 300
@@ -342,13 +345,15 @@ def readSpool(ui=False):
             page = i//4 + 4
             pdata, sw1, sw2 = connection.transmit(cmd_read_page(page))
             if not ui:
-                print("[{:02x}] = {}\tstatus = {}".format(page, util.toHexString(pdata), util.toHexString([sw1, sw2])))
+                print('[{:02x}] = {}\tstatus = {}'.format(page, util.toHexString(pdata), util.toHexString([sw1, sw2])))
             data.append(pdata)
 
         tag_data = [item for sublist in data for item in sublist]
 
-    except NoCardException:
-        print("ERROR: Card was removed")
+    except (NoCardException, IndexError):
+        print('ERROR: Card was removed')
+        if ui:
+            return 2, DEFAULT_SERIAL, 0, 0, 0, 0
     
     if ui:
         cardStatus, r_guid, r_total, r_remain, r_time = decode(bytes(tag_data), ui=True)
@@ -375,7 +380,7 @@ request = CardRequest(timeout=TIMEOUT, cardType=card_type)
 
 
 # /---------------------------------\
-#|         Custom Spool Maker        |
+#|           CL Spool Maker          |
 # \---------------------------------/
 if __name__ == '__main__':
 
