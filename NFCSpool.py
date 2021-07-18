@@ -5,7 +5,9 @@ To use, place an NTAG216 compatible tag on the reader, edit the values in the 'c
 the end of this script, and run the script. The ACR122U will beep once complete. Imported by SpoolMaker
 for use by the Spool Maker GUI.
 
+Thanks to:
 Developed from scripts by: @gandy, Ultimaker Public Forum, 2020
+Thanks to Maker2 (Ultimaker Public Forum) for supplying a fix for running on MacOS
 
 Useful Links used to construct this as a GUI:
 https://community.ultimaker.com/topic/19648-readwrite-nfc-tags/
@@ -41,13 +43,14 @@ from smartcard import util
 import uuid
 from binascii import hexlify
 from crc8 import crc8
-from ndef import record, message_encoder, message_decoder
-import uuid
+
+from ndef import message
+from ndef.record import GlobalRecord, Record
 
 __author__ = 'Dale A. Osborne'
 __copyright__ = 'Copyright 2021, Dale Osborne'
 __license__ = 'GPL'
-__version__ = '1.1.0'
+__version__ = '1.1.1'
 
 
 
@@ -73,8 +76,7 @@ DEFAULT_SERIAL = '00:00:00:00:00:00:00'
 class MustBeEvenException(Exception):
     pass
 
-class UltimakerMaterialRecord(record.GlobalRecord):
-
+class UltimakerMaterialRecord(GlobalRecord):
     _type = 'urn:nfc:ext:ultimaker.nl:material'
     _name = '1'
 
@@ -115,8 +117,7 @@ class UltimakerMaterialRecord(record.GlobalRecord):
         return cls(material_id, serial_number, version, compat_version,
                    manufacturing_ts=manufacturing_timestamp, station_id=programming_station_id, batch_code=batch_code)
 
-class UltimakerStatRecord(record.GlobalRecord):
-
+class UltimakerStatRecord(GlobalRecord):
     _type = 'urn:nfc:ext:ultimaker.nl:stat'
     _name = '2'
 
@@ -155,8 +156,7 @@ class UltimakerStatRecord(record.GlobalRecord):
         return cls(material_total=material_total, material_unit=material_unit, material_remaining=material_remaining,
                    total_usage_duration=total_usage_duration, version=version, compat_version=compat_version)
 
-class SigRecord(record.GlobalRecord):
-
+class SigRecord(GlobalRecord):
     _type = 'urn:nfc:wkt:Sig'
 
     _decode_min_payload_length = 2
@@ -181,7 +181,7 @@ class MyFilamentSpool:
         self.status = UltimakerStatRecord(material_unit=unit, material_total=weight)
 
     def data(self) -> bytes:
-        encoder = message_encoder()
+        encoder = message.message_encoder()
         results = list()
         encoder.send(None)
         encoder.send(self.material)
@@ -203,9 +203,9 @@ class MyFilamentSpool:
 # /---------------------------------\
 #|         Register Classes          |
 # \---------------------------------/
-record.Record.register_type(UltimakerMaterialRecord)
-record.Record.register_type(UltimakerStatRecord)
-record.Record.register_type(SigRecord)
+Record.register_type(UltimakerMaterialRecord)
+Record.register_type(UltimakerStatRecord)
+Record.register_type(SigRecord)
 
 
 
@@ -214,7 +214,7 @@ record.Record.register_type(SigRecord)
 # \---------------------------------/
 def decode(octets, ui=False):
     '''Decodes UM spool binary to records'''
-    records = message_decoder(octets, errors='relax')
+    records = message.message_decoder(octets, errors='relax')
 
     if ui:
         r_guid = ''
