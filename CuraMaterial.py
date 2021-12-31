@@ -51,7 +51,7 @@ if platform.system() == 'Windows':
     # Get Cura User Directory
     CURA_USER_DIR = os.path.join(os.getenv('APPDATA'), 'cura')
     CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir()]
-    CURA_CONFIGS.sort()
+    CURA_CONFIGS.sort(key=lambda x:int(x.replace(".","")))
     CURA_USER_MAT_DIR = os.path.join(CURA_USER_DIR, CURA_CONFIGS[-1], 'materials')
 
     # Get Cura Install Directory
