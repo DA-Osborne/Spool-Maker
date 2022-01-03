@@ -50,7 +50,7 @@ from ndef.record import GlobalRecord, Record
 __author__ = 'Dale A. Osborne'
 __copyright__ = 'Copyright 2021, Dale Osborne'
 __license__ = 'GPL'
-__version__ = '1.1.1'
+__version__ = '1.1.2'
 
 
 
