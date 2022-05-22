@@ -3,7 +3,7 @@ A PyQt5 UI for reading/writing custom Ultimaker NFC Material Spools
 
 This GUI/set of scripts is based on some classes written by @gandy92 here: https://gist.github.com/gandy92/a7eef12009045f7b3fc01d778c3b79a7
 
-I have added to his work but designing a small GUI, adding some more functions for reading/editing spools, and for automatically looking up materials from the Ultimaker Cura slicer.
+I have added to his work by designing a small GUI, adding some more functions for reading/editing spools, and for automatically looking up materials from the Ultimaker Cura slicer.
 
 Tested with the ACR122U SmartCard reader. (Usually available on Amazon and eBay)
 To use, place an NTAG216 compatible tag (sometimes referred to as a MIFARE Ultralight tag) on the reader.
@@ -12,9 +12,6 @@ Use the 'Read Tag' button to read the material on a tag, and the 'Write Tag' but
 You can also overwrite used UM spools. The ACR122U will beep once complete.
 
 Please also see: https://community.ultimaker.com/topic/19648-readwrite-nfc-tags/ for its purpose.
-
-Note: If using Linux, you will need to provide the system materials directly in the CuraMaterial.py file before these materials will appear in the list.
-I don't have a Linux machine to determine where the Cura directory is at this time.
 
 Install Instructions (Running from script):
 -------------------------------------------------------
