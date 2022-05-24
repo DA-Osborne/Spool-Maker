@@ -29,7 +29,7 @@ ACR122U SmartCard reader. (Usually available on Amazon and eBay. Other readers m
 3. Plug in your smartcard reader (if you do not do this first, you may get an error)
 
 4. Run the following command to launch: 
-<code> 'python3 SpoolMaker.py' </code>
+<code> python3 SpoolMaker.py </code>
 
 ### To compile an exe version with pyinstaller (Windows):
 
