@@ -24,11 +24,12 @@ import os
 import re
 import platform
 from pathlib import Path
+from winreg import HKEY_CURRENT_USER
 
 __author__ = 'Dale A. Osborne'
 __copyright__ = 'Copyright 2021, Dale Osborne'
 __license__ = 'GPL'
-__version__ = '1.1.2'
+__version__ = '1.1.3'
 
 
 
@@ -55,9 +56,24 @@ if platform.system() == 'Windows':
     CURA_USER_MAT_DIR = os.path.join(CURA_USER_DIR, CURA_CONFIGS[-1], 'materials')
 
     # Get Cura Install Directory
-    latestInstalled = getLatestKey(OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\WOW6432Node\\Ultimaker B.V.', 0, KEY_READ))
-    curaSysDir = OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\WOW6432Node\\Ultimaker B.V.\\' + latestInstalled, 0, KEY_READ)
-    CURA_INSTALL_DIR = QueryValueEx(curaSysDir, '')[0]
+    latestInstalled = None
+    curaSysDir = None
+    
+    try:
+        # Search for Cura >= v5.0 version
+        curaSysDirKey = OpenKey(HKEY_CURRENT_USER, 'Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Ultimaker-Cura.exe\\', 0, KEY_READ)
+        curaSysDir = os.path.dirname(QueryValueEx(curaSysDirKey, '')[0])
+    except:
+        try:
+            # Search for Cura <= v4.13.1
+            latestVersion = getLatestKey(OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\WOW6432Node\\Ultimaker B.V.', 0, KEY_READ))
+            curaSysDirKey = OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\WOW6432Node\\Ultimaker B.V.\\' + latestVersion, 0, KEY_READ)
+            curaSysDir = QueryValueEx(curaSysDir, '')[0]
+        except:
+            print('Failed to determine Ultimaker Cura install location')
+            exit(1)
+    
+    CURA_INSTALL_DIR = curaSysDir
     CURA_MAT_DIR = os.path.join(CURA_INSTALL_DIR, 'resources', 'materials')
 
 elif platform.system() == 'Darwin': # OS X
