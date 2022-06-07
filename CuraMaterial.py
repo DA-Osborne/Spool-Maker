@@ -30,7 +30,7 @@ from winreg import HKEY_CURRENT_USER
 __author__ = 'Dale A. Osborne'
 __copyright__ = 'Copyright 2021, Dale Osborne'
 __license__ = 'GPL'
-__version__ = '1.1.3'
+__version__ = '1.1.4'
 
 
 
@@ -69,7 +69,7 @@ if platform.system() == 'Windows':
             # Search for Cura <= v4.13.1
             latestVersion = getLatestKey(OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\WOW6432Node\\Ultimaker B.V.', 0, KEY_READ))
             curaSysDirKey = OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\WOW6432Node\\Ultimaker B.V.\\' + latestVersion, 0, KEY_READ)
-            curaSysDir = QueryValueEx(curaSysDir, '')[0]
+            curaSysDir = QueryValueEx(curaSysDirKey, '')[0]
         except:
             print('Failed to determine Ultimaker Cura install location')
             exit(1)
