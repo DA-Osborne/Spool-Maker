@@ -64,6 +64,7 @@ if platform.system() == 'Windows':
         # Search for Cura >= v5.0 version
         curaSysDirKey = OpenKey(HKEY_CURRENT_USER, 'Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Ultimaker-Cura.exe\\', 0, KEY_READ)
         curaSysDir = os.path.dirname(QueryValueEx(curaSysDirKey, '')[0])
+        latestInstalled = 5
     except:
         try:
             # Search for Cura <= v4.13.1
@@ -75,7 +76,10 @@ if platform.system() == 'Windows':
             exit(1)
     
     CURA_INSTALL_DIR = curaSysDir
-    CURA_MAT_DIR = os.path.join(CURA_INSTALL_DIR, 'resources', 'materials')
+    if latestInstalled == 5:
+        CURA_MAT_DIR = os.path.join(CURA_INSTALL_DIR, 'share', 'cura', 'resources', 'materials')
+    else:
+        CURA_MAT_DIR = os.path.join(CURA_INSTALL_DIR, 'resources', 'materials')
 
 elif platform.system() == 'Darwin': # OS X
     # Get Cura User Directory
