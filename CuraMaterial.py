@@ -25,7 +25,6 @@ from sys import exit
 import re
 import platform
 from pathlib import Path
-from winreg import HKEY_CURRENT_USER
 
 __author__ = 'Dale A. Osborne'
 __copyright__ = 'Copyright 2021, Dale Osborne'
@@ -39,7 +38,7 @@ __version__ = '1.1.4'
 # \---------------------------------/
 # Windows
 if platform.system() == 'Windows':
-    from winreg import HKEY_LOCAL_MACHINE, KEY_READ, OpenKey, QueryValueEx, EnumKey, QueryInfoKey
+    from winreg import HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ, OpenKey, QueryValueEx, EnumKey, QueryInfoKey
     
     def getLatestKey(hKey):
         curaList = []
