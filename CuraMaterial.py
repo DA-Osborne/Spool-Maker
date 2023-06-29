@@ -58,21 +58,33 @@ if platform.system() == 'Windows':
     # Get Cura Install Directory
     latestInstalled = None
     curaSysDir = None
-    
+
     try:
-        # Search for Cura >= v5.0 version
-        curaSysDirKey = OpenKey(HKEY_CURRENT_USER, 'Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Ultimaker-Cura.exe\\', 0, KEY_READ)
+        # Search for Cura >= v5.3 version
+        access_key = OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths', 0, KEY_READ)
+        curaList = []
+        for i in range(0, QueryInfoKey(access_key)[0]):
+            curaList.append(EnumKey(access_key, i))
+            fList = [k for k in curaList if 'UltiMaker Cura' in k]
+            fList.sort()
+        curaSysDirKey = OpenKey(HKEY_LOCAL_MACHINE,"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\" + fList[-1], 0, KEY_READ)
         curaSysDir = os.path.dirname(QueryValueEx(curaSysDirKey, '')[0])
         latestInstalled = 5
     except:
         try:
-            # Search for Cura <= v4.13.1
-            latestVersion = getLatestKey(OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\WOW6432Node\\Ultimaker B.V.', 0, KEY_READ))
-            curaSysDirKey = OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\WOW6432Node\\Ultimaker B.V.\\' + latestVersion, 0, KEY_READ)
-            curaSysDir = QueryValueEx(curaSysDirKey, '')[0]
+            # Search for Cura >= v5.0 <= 5.2.1 version
+            curaSysDirKey = OpenKey(HKEY_CURRENT_USER, 'Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Ultimaker-Cura.exe\\', 0, KEY_READ)
+            curaSysDir = os.path.dirname(QueryValueEx(curaSysDirKey, '')[0])
+            latestInstalled = 5
         except:
-            print('Failed to determine Ultimaker Cura install location')
-            exit(1)
+            try:
+                # Search for Cura <= v4.13.1
+                latestVersion = getLatestKey(OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\WOW6432Node\\Ultimaker B.V.', 0, KEY_READ))
+                curaSysDirKey = OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\WOW6432Node\\Ultimaker B.V.\\' + latestVersion, 0, KEY_READ)
+                curaSysDir = QueryValueEx(curaSysDirKey, '')[0]
+            except:
+                print('Failed to determine Ultimaker Cura install location')
+                exit(1)
     
     CURA_INSTALL_DIR = curaSysDir
     if latestInstalled == 5:

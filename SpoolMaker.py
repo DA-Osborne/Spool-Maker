@@ -27,7 +27,7 @@ import sys
 import os
 import time
 
-from PyQt5 import QtWidgets, QtGui, uic
+from PyQt5 import QtWidgets, QtGui, uic, QtCore
 
 import CuraMaterial as c
 import NFCSpool as s
@@ -37,6 +37,9 @@ __copyright__ = 'Copyright 2021, Dale Osborne'
 __license__ = 'GPL'
 __version__ = '1.1.4'
 
+# Enable high DPI Scaling for the GUI
+QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True) #enable highdpi scaling
+QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True) #use highdpi icons
 
 
 # Resource loader for loading UI file with PyInstaller dist
