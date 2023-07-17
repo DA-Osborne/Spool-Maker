@@ -6,6 +6,9 @@ Compatible with NTAG216 MIFARE Ultralight.
 Uses PyQt5 for GUI, or can be run from a terminal using the customisable variables at the end.
 Note: Connect the reader before loading the application!
 
+Thanks to:
+Thanks to Maeven-Black (GitHub) for supplying fix for high DPI screens.
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -27,7 +30,7 @@ import sys
 import os
 import time
 
-from PyQt5 import QtWidgets, QtGui, uic
+from PyQt5 import QtWidgets, QtGui, uic, QtCore
 
 import CuraMaterial as c
 import NFCSpool as s
@@ -35,9 +38,17 @@ import NFCSpool as s
 __author__ = 'Dale A. Osborne'
 __copyright__ = 'Copyright 2021, Dale Osborne'
 __license__ = 'GPL'
-__version__ = '1.1.4'
+__version__ = '1.1.5'
 
 
+
+# /---------------------------------\
+#|       Functions & Variables       |
+# \---------------------------------/
+
+# Enable high DPI Scaling for the GUI
+QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
 # Resource loader for loading UI file with PyInstaller dist
 def resource_path(relPath):
