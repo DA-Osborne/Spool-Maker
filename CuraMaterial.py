@@ -113,7 +113,7 @@ elif platform.system() == 'Linux':
     CURA_USER_MAT_DIR = os.path.join(CURA_USER_DIR, CURA_CONFIGS[-1], 'materials')
     
     # Set Cura Install Directory
-    CURA_MAT_DIR = ''
+    CURA_MAT_DIR = str(Path.home()) + '/opt/UM/materials' # set a sensible default where AppInfo set can be placed
 
 else:
     print('Unknown operating system. To override, remove the exit(1) command from the CuraMaterial script.')
@@ -128,11 +128,14 @@ print('System Material Directory: ', CURA_MAT_DIR)
 #|              Classes              |
 # \---------------------------------/
 class curaMaterial():
-    def __init__(self, brand:str, material:str, color:str, guid:str):
+    def __init__(self, brand:str, material:str, color:str, label:str, guid:str):
         self.brand = brand
         self.material = material
         self.color = color
-        self.guid = guid
+        self.label = label #Label is used for custom materials. Without they are indistinguishable
+        self.guid = guid 
+        #Might as well process this once if we want to sort on it.
+        self.allInfo = brand + ':' + material + ' ' + label + ' (' + color + ')' 
 
 
 
@@ -141,8 +144,8 @@ class curaMaterial():
 # \---------------------------------/
 def read_material(cm):
     '''Reads a cura material profile (.xml.fdm_material) and returns a curaMaterial object'''
-    brand = material = color = guid = ''
-    found = [False]*4 # Corresponds with above values. True once that value is found.
+    brand = material = color = label = guid = ''
+    found = [False]*5 # Corresponds with above values. True once that value is found.
     with open(cm, 'r') as f:
         for line in f:
             if all(found):
@@ -174,11 +177,24 @@ def read_material(cm):
                         break
                 found[2] = True
                 continue
-            if '<GUID>' in line and not found[3]:
-                guid = re.split('<|>| ', line.strip())[2]
+            if '<label>' in line and not found[3]:
+                data = re.split('<|>| ', line.strip())
+                for l in data[2:]:
+                    if l != '/label':
+                        label += l
+                    else:
+                        break
                 found[3] = True
                 continue
-    return curaMaterial(brand, material, color, guid)
+            if '<GUID>' in line and not found[4]:
+                guid = re.split('<|>| ', line.strip())[2]
+                found[4] = True
+                continue
+    return curaMaterial(brand, material, color, label, guid)
+
+def sortKey(e):
+    return e.allInfo
+
 
 def get_all_materials():
     '''Reads all system and user cura materials, and returns a list of curaMaterial objects'''
@@ -193,9 +209,10 @@ def get_all_materials():
         for file in files:
             if file.endswith('.xml.fdm_material'):
                 mList.append(read_material(os.path.join(root, file)))
-    
+    mList.sort(key=sortKey)
+
     for mat in mList:
-        sList.append(mat.brand + ':' + mat.material + ' (' + mat.color + ')')
+        sList.append(mat.allInfo)
 
     return mList, sList
 
