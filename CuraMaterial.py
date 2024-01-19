@@ -195,20 +195,28 @@ def read_material(cm):
 def sortKey(e):
     return e.allInfo
 
+def add_if_match(mList, root, file, filtStr):
+    if file.endswith('.xml.fdm_material'):
+        mat = read_material(os.path.join(root, file))
+        if not any(ele.isupper() for ele in filtStr):
+            matToSearch=mat.allInfo.lower()
+        else:
+            matToSearch=mat.allInfo
+        if filtStr in matToSearch:
+            mList.append(mat)
 
-def get_all_materials():
+def get_all_materials(filtStr = ""):
     '''Reads all system and user cura materials, and returns a list of curaMaterial objects'''
     mList = [] # List of materials
     sList = [] # List of material names for QT combobox
 
     for root, _, files in os.walk(CURA_USER_MAT_DIR):
         for file in files:
-            if file.endswith('.xml.fdm_material'):
-                mList.append(read_material(os.path.join(root, file)))
+            add_if_match(mList, root, file, filtStr)
+
     for root, _, files in os.walk(CURA_MAT_DIR):
         for file in files:
-            if file.endswith('.xml.fdm_material'):
-                mList.append(read_material(os.path.join(root, file)))
+            add_if_match(mList, root, file, filtStr)
     mList.sort(key=sortKey)
 
     for mat in mList:
