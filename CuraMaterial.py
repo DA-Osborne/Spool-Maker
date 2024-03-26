@@ -40,6 +40,7 @@ __version__ = '1.1.5'
 #|          Get Cura Config          |
 # \---------------------------------/
 # Windows
+matchCuraVerNum = re.compile("^\d+.\d+")
 if platform.system() == 'Windows':
     from winreg import HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ, OpenKey, QueryValueEx, EnumKey, QueryInfoKey
     
@@ -54,7 +55,7 @@ if platform.system() == 'Windows':
     
     # Get Cura User Directory
     CURA_USER_DIR = os.path.join(os.getenv('APPDATA'), 'cura')
-    CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir()]
+    CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir() and matchCuraVerNum.match(f.name)]
     CURA_CONFIGS.sort(key=lambda x:int(x.replace(".","" if len(x)>3 else "0")))
     CURA_USER_MAT_DIR = os.path.join(CURA_USER_DIR, CURA_CONFIGS[-1], 'materials')
 
@@ -98,7 +99,8 @@ if platform.system() == 'Windows':
 elif platform.system() == 'Darwin': # OS X
     # Get Cura User Directory
     CURA_USER_DIR = str(Path.home()) + '/Library/Application Support/cura/'
-    CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir()]
+
+    CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir() and matchCuraVerNum.match(f.name)]
     CURA_CONFIGS.sort(key=lambda x:int(x.replace(".","" if len(x)>3 else "0")))
     CURA_USER_MAT_DIR = os.path.join(CURA_USER_DIR, CURA_CONFIGS[-1], 'materials')
     
@@ -108,8 +110,10 @@ elif platform.system() == 'Darwin': # OS X
 elif platform.system() == 'Linux':
     # Get Cura User Directory
     CURA_USER_DIR = str(Path.home()) + '/.local/share/cura/'
-    CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir()]
+    CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir() and matchCuraVerNum.match(f.name)]
     CURA_CONFIGS.sort(key=lambda x:int(x.replace(".","" if len(x)>3 else "0")))
+    print(CURA_CONFIGS)
+    print(CURA_CONFIGS[-1])
     CURA_USER_MAT_DIR = os.path.join(CURA_USER_DIR, CURA_CONFIGS[-1], 'materials')
     
     # Set Cura Install Directory
