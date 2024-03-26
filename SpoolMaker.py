@@ -74,6 +74,8 @@ class Ui(QtWidgets.QMainWindow):
 
         # Material Selector
         self.materialSelect = self.findChild(QtWidgets.QComboBox, 'combo_matSelector')
+        self.matFilt = self.findChild(QtWidgets.QLineEdit, 'material_filter')
+        self.matFilt.textChanged.connect(self.filterChanged)
         if self.mList is not None:
             self.materialSelect.addItems(self.mList)
         self.materialSelect.currentIndexChanged.connect(self.materialSelectionChange)
@@ -100,6 +102,7 @@ class Ui(QtWidgets.QMainWindow):
         self.tagTime = self.findChild(QtWidgets.QLineEdit, 'line_printtime')
 
         self.newWeight = self.findChild(QtWidgets.QLineEdit, 'line_nweight')
+
 
         self.status = self.findChild(QtWidgets.QLineEdit, 'line_status')
         self.statusColor = self.findChild(QtWidgets.QProgressBar, 'progressBar')
@@ -131,17 +134,27 @@ class Ui(QtWidgets.QMainWindow):
     def rescan(self):
         # Load installed materials
         print('Reloading Cura materials...', end = '')
-        self.curaMaterials, self.mList = c.get_all_materials()
+        self.curaMaterials, self.mList = c.get_all_materials(self.matFilt.text())
         self.materialSelect.clear()
         if self.mList is not None:
             self.materialSelect.addItems(self.mList)
         print('Done!')
 
+    def filterChanged(self):
+        self.rescan()
+
     def materialSelectionChange(self, i):
-        self.infoBrand.setText(self.curaMaterials[i].brand)
-        self.infoMaterial.setText(self.curaMaterials[i].material)
-        self.infoColor.setText(self.curaMaterials[i].color)
-        self.infoGUID.setText(self.curaMaterials[i].guid)
+        print(i)
+        if i < 0:
+            self.infoBrand.setText("")
+            self.infoMaterial.setText("")
+            self.infoColor.setText("")
+            self.infoGUID.setText("")
+        else:
+            self.infoBrand.setText(self.curaMaterials[i].brand)
+            self.infoMaterial.setText(self.curaMaterials[i].material)
+            self.infoColor.setText(self.curaMaterials[i].color)
+            self.infoGUID.setText(self.curaMaterials[i].guid)
     
     def readTag(self, post_write=False):
         print('Reading Tag...')
