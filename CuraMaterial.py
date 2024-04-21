@@ -132,12 +132,13 @@ print('System Material Directory: ', CURA_MAT_DIR)
 #|              Classes              |
 # \---------------------------------/
 class curaMaterial():
-    def __init__(self, brand:str, material:str, color:str, label:str, guid:str):
+    def __init__(self, brand:str, material:str, color:str, label:str, guid:str, diameter:str):
         self.brand = brand
         self.material = material
         self.color = color
         self.label = label #Label is used for custom materials. Without they are indistinguishable
         self.guid = guid 
+        self.diameter = diameter 
         #Might as well process this once if we want to sort on it.
         self.allInfo = brand + ':' + material + ' ' + label + ' (' + color + ')' 
 
@@ -148,8 +149,8 @@ class curaMaterial():
 # \---------------------------------/
 def read_material(cm):
     '''Reads a cura material profile (.xml.fdm_material) and returns a curaMaterial object'''
-    brand = material = color = label = guid = ''
-    found = [False]*5 # Corresponds with above values. True once that value is found.
+    brand = material = color = label = guid = diameter = ''
+    found = [False]*6 # Corresponds with above values. True once that value is found.
     with open(cm, 'r') as f:
         for line in f:
             if all(found):
@@ -194,39 +195,50 @@ def read_material(cm):
                 guid = re.split('<|>| ', line.strip())[2]
                 found[4] = True
                 continue
-    return curaMaterial(brand, material, color, label, guid)
+
+            if '<diameter>' in line and not found[5]:
+                diameter = re.split('<|>| ', line.strip())[2]
+                print(diameter)
+                found[5] = True
+                continue
+    return curaMaterial(brand, material, color, label, guid, diameter)
 
 def sortKey(e):
     return e.allInfo
 
-def add_if_match(mList, root, file, filtStr):
+def add_if_match(mList, mDia, root, file, filtStr, matDia):
     if file.endswith('.xml.fdm_material'):
         mat = read_material(os.path.join(root, file))
+        mDia["All"].append(mat)
+        mDia.setdefault(mat.diameter,[])
+        mDia[mat.diameter].append(mat)
+
         if not any(ele.isupper() for ele in filtStr):
             matToSearch=mat.allInfo.lower()
         else:
             matToSearch=mat.allInfo
-        if filtStr in matToSearch:
+        if filtStr in matToSearch and (mat.diameter == matDia or "All" == matDia):
             mList.append(mat)
 
-def get_all_materials(filtStr = ""):
+def get_all_materials(filtStr = "", matDia = "All"):
     '''Reads all system and user cura materials, and returns a list of curaMaterial objects'''
     mList = [] # List of materials
     sList = [] # List of material names for QT combobox
+    mDia = {"All":[]}  # Dict of material diameters
 
     for root, _, files in os.walk(CURA_USER_MAT_DIR):
         for file in files:
-            add_if_match(mList, root, file, filtStr)
+            add_if_match(mList, mDia, root, file, filtStr, matDia)
 
     for root, _, files in os.walk(CURA_MAT_DIR):
         for file in files:
-            add_if_match(mList, root, file, filtStr)
+            add_if_match(mList, mDia, root, file, filtStr, matDia)
     mList.sort(key=sortKey)
 
     for mat in mList:
         sList.append(mat.allInfo)
 
-    return mList, sList
+    return mList, sList, mDia
 
 if __name__ == '__main__':
     # If run directly, list installed materials

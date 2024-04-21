@@ -70,12 +70,21 @@ class Ui(QtWidgets.QMainWindow):
         self.setWindowIcon(QtGui.QIcon(resource_path('icon.ico')))
 
         # Load installed materials
-        self.curaMaterials, self.mList = c.get_all_materials()
+        self.curaMaterials, self.mList, self.mDia = c.get_all_materials()
 
         # Material Selector
         self.materialSelect = self.findChild(QtWidgets.QComboBox, 'combo_matSelector')
         self.matFilt = self.findChild(QtWidgets.QLineEdit, 'material_filter')
         self.matFilt.textChanged.connect(self.filterChanged)
+        self.matDia = self.findChild(QtWidgets.QComboBox, 'material_diameter')
+        self.matDia.currentIndexChanged.connect(self.filterChanged)
+
+        if self.mDia is not None:
+            self.mDiaKeys = list(self.mDia);
+            self.mDiaKeys.sort()
+            self.matDia.addItems(self.mDiaKeys)
+            self.matDia.setCurrentIndex(self.mDiaKeys.index("2.85"))
+
         if self.mList is not None:
             self.materialSelect.addItems(self.mList)
         self.materialSelect.currentIndexChanged.connect(self.materialSelectionChange)
@@ -134,7 +143,7 @@ class Ui(QtWidgets.QMainWindow):
     def rescan(self):
         # Load installed materials
         print('Reloading Cura materials...', end = '')
-        self.curaMaterials, self.mList = c.get_all_materials(self.matFilt.text())
+        self.curaMaterials, self.mList, self.mDia = c.get_all_materials(self.matFilt.text(), self.mDiaKeys[self.matDia.currentIndex()])
         self.materialSelect.clear()
         if self.mList is not None:
             self.materialSelect.addItems(self.mList)
