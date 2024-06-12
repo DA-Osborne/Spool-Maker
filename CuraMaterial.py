@@ -242,7 +242,6 @@ def get_all_materials(filtStr = "", matDia = "All"):
 
 if __name__ == '__main__':
     # If run directly, list installed materials
-    kk
     materials, qt_materials, _ = get_all_materials()
     for material in materials:
         print('Material: ', material.brand, '/', material.material, '\t', material.color)
