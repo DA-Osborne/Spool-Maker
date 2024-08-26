@@ -71,6 +71,7 @@ class Ui(QtWidgets.QMainWindow):
 
         # Load installed materials
         self.curaMaterials, self.mList, self.mDia = c.get_all_materials()
+        self.curaAllMaterials, self.mList, self.mDia = c.get_all_materials()
 
         # Material Selector
         self.materialSelect = self.findChild(QtWidgets.QComboBox, 'combo_matSelector')
@@ -219,8 +220,9 @@ class Ui(QtWidgets.QMainWindow):
     
     def lookupMaterial(self, guid:str):
         print('Finding: {}'.format(guid))
-        for material in self.curaMaterials:
+        for material in self.curaAllMaterials:
             if material.guid == guid:
+                print('Found: {} {} {} {}'.format(material.brand,material.material,material.color,material.guid))
                 return [material.brand, material.material, material.color]
         return ['!!', 'Material not in database', '!!']
 
