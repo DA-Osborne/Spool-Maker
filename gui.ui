@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>644</width>
-    <height>495</height>
+    <height>554</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,7 +20,7 @@
       <x>10</x>
       <y>10</y>
       <width>621</width>
-      <height>141</height>
+      <height>151</height>
      </rect>
     </property>
     <property name="title">
@@ -39,7 +39,6 @@
       <string>Material Filter</string>
      </property>
     </widget>
-
     <widget class="QLineEdit" name="material_filter">
      <property name="geometry">
       <rect>
@@ -50,7 +49,6 @@
       </rect>
      </property>
     </widget>
-
     <widget class="QLabel" name="label">
      <property name="geometry">
       <rect>
@@ -64,7 +62,6 @@
       <string>Material Diameter</string>
      </property>
     </widget>
-
     <widget class="QComboBox" name="material_diameter">
      <property name="geometry">
       <rect>
@@ -75,7 +72,6 @@
       </rect>
      </property>
     </widget>
-
     <widget class="QLabel" name="label">
      <property name="geometry">
       <rect>
@@ -143,7 +139,7 @@
       <rect>
        <x>20</x>
        <y>75</y>
-       <width>111</width>
+       <width>121</width>
        <height>21</height>
       </rect>
      </property>
@@ -184,7 +180,7 @@
       <x>10</x>
       <y>175</y>
       <width>621</width>
-      <height>221</height>
+      <height>231</height>
      </rect>
     </property>
     <property name="title">
@@ -374,9 +370,6 @@
        <height>20</height>
       </rect>
      </property>
-     <property name="readOnly">
-      <bool>true</bool>
-     </property>
     </widget>
     <widget class="QLineEdit" name="line_nweight">
      <property name="geometry">
@@ -451,7 +444,7 @@
     <property name="geometry">
      <rect>
       <x>550</x>
-      <y>405</y>
+      <y>420</y>
       <width>75</width>
       <height>23</height>
      </rect>
@@ -464,7 +457,7 @@
     <property name="geometry">
      <rect>
       <x>470</x>
-      <y>405</y>
+      <y>420</y>
       <width>75</width>
       <height>23</height>
      </rect>
@@ -477,9 +470,9 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>435</y>
+      <y>470</y>
       <width>641</width>
-      <height>23</height>
+      <height>41</height>
      </rect>
     </property>
     <property name="palette">
@@ -533,7 +526,7 @@
     <property name="geometry">
      <rect>
       <x>200</x>
-      <y>435</y>
+      <y>480</y>
       <width>241</width>
       <height>20</height>
      </rect>
@@ -564,7 +557,7 @@
      <x>0</x>
      <y>0</y>
      <width>644</width>
-     <height>21</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuCommands">

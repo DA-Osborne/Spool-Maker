@@ -206,7 +206,8 @@ class Ui(QtWidgets.QMainWindow):
         guid = self.curaMaterials[self.materialSelect.currentIndex()].guid
         unit = 2#mg
         weight = int(self.newWeight.text())
-        s.writeSpool(guid, unit, weight)
+        rweight = int(self.tagRWeight.text())
+        s.writeSpool(guid, unit, weight, rweight)
         time.sleep(1) # Wait 1 second
         self.setStatus('Tag Write Successful', True)
         self.readTag(True) # Read tag which should now contain the new data

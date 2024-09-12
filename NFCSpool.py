@@ -173,12 +173,15 @@ class SigRecord(GlobalRecord):
         return cls(sig)
 
 class MyFilamentSpool:
-    def __init__(self, guid, serial, unit=2, weight=750000):
+    def __init__(self, guid, serial, unit=2, weight=750000, remaining=750000):
         self.material = UltimakerMaterialRecord(material_id=guid,
                                                 serial=serial,
                                                 batch_code='123456789AB',
                                                 station_id=0xaffe)
-        self.status = UltimakerStatRecord(material_unit=unit, material_total=weight)
+        if remaining is None:
+            remaining = weight  # If no remaining material is specified, assume it is equal to the total weight.
+        
+        self.status = UltimakerStatRecord(material_unit=unit, material_total=weight, material_remaining=remaining)
 
     def data(self) -> bytes:
         encoder = message.message_encoder()
@@ -272,7 +275,7 @@ def cmd_write_page(start, data):
 def availableReaders():
     return len(readers())
 
-def writeSpool(id, unit, tw, ui=False):
+def writeSpool(id, unit, tw, rw, ui=False):
     service = None
     try:
         print('Waiting for tag...')
@@ -296,7 +299,7 @@ def writeSpool(id, unit, tw, ui=False):
         print('UID = {}\tstatus = {}\tdata={}'.format(uid, status, uid_data))
         
         # Create spool data for this tag
-        spool = MyFilamentSpool(uuid.UUID(id), serial, unit, tw)
+        spool = MyFilamentSpool(uuid.UUID(id), serial, unit, tw, rw)
         decode(spool.data())
         tag_data = spool.data()
 
@@ -393,8 +396,9 @@ if __name__ == '__main__':
     
     '''--Material Weight--:   '''
     total_weight = 1000000#mg
+    remain_weight = 200000#mg
     
     # Write spool
     print('Trying to read tag...')
-    writeSpool(guid, mu, total_weight)
+    writeSpool(guid, mu, total_weight, remain_weight)
     print('Operation completed :)')
