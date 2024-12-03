@@ -218,7 +218,7 @@ def add_if_match(mList, mDia, root, file, filtStr, matDia):
         else:
             matToSearch=mat.allInfo
         filamentMatcher = re.compile(filtStr)
-        if filamentMatcher.match(matToSearch) and (mat.diameter == matDia or "All" == matDia):
+        if filamentMatcher.search(matToSearch) and (mat.diameter == matDia or "All" == matDia):
             mList.append(mat)
         else:
             print(mat)
