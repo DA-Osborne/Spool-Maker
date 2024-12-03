@@ -122,7 +122,8 @@ class Ui(QtWidgets.QMainWindow):
         self.btnRead.clicked.connect(self.readTag)
         self.btnWrite = self.findChild(QtWidgets.QPushButton, 'btn_write')
         self.btnWrite.clicked.connect(self.writeTag)
-
+        self.btnResetRemain = self.findChild(QtWidgets.QPushButton, 'btn_reset_remain')
+        self.btnResetRemain.clicked.connect(self.resetRemain)
         # Menu Actions
         self.actionExit = self.findChild(QtWidgets.QAction, 'actionExit')
         self.actionExit.triggered.connect(self.exit)
@@ -200,13 +201,21 @@ class Ui(QtWidgets.QMainWindow):
             print('Read timed out')
             self.setStatus('Tag Read Timed Out', False)
 
+    def resetRemain(self):
+            self.tagRWeight.setText(self.newWeight.text())
+
     def writeTag(self):
         print('Writing Tag...')
         self.setStatus('Writing New Tag...', False)
         guid = self.curaMaterials[self.materialSelect.currentIndex()].guid
         unit = 2#mg
         weight = int(self.newWeight.text())
-        rweight = int(self.tagRWeight.text())
+        if self.tagRWeight.text().isdigit():
+            rweight = int(self.tagRWeight.text())
+        else:
+            print("Invalid weight. Set it to new weight")
+            rweight = weight
+            self.tagRWeight.setText(self.newWeight.text())
         s.writeSpool(guid, unit, weight, rweight)
         time.sleep(1) # Wait 1 second
         self.setStatus('Tag Write Successful', True)

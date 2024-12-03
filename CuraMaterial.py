@@ -217,8 +217,11 @@ def add_if_match(mList, mDia, root, file, filtStr, matDia):
             matToSearch=mat.allInfo.lower()
         else:
             matToSearch=mat.allInfo
-        if filtStr in matToSearch and (mat.diameter == matDia or "All" == matDia):
+        filamentMatcher = re.compile(filtStr)
+        if filamentMatcher.match(matToSearch) and (mat.diameter == matDia or "All" == matDia):
             mList.append(mat)
+        else:
+            print(mat)
 
 def get_all_materials(filtStr = "", matDia = "All"):
     '''Reads all system and user cura materials, and returns a list of curaMaterial objects'''
