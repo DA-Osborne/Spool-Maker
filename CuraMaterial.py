@@ -40,6 +40,7 @@ __version__ = '1.1.5'
 #|          Get Cura Config          |
 # \---------------------------------/
 # Windows
+matchCuraVerNum = re.compile("^\d+.\d+")
 if platform.system() == 'Windows':
     from winreg import HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ, OpenKey, QueryValueEx, EnumKey, QueryInfoKey
     
@@ -54,7 +55,7 @@ if platform.system() == 'Windows':
     
     # Get Cura User Directory
     CURA_USER_DIR = os.path.join(os.getenv('APPDATA'), 'cura')
-    CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir()]
+    CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir() and matchCuraVerNum.match(f.name)]
     CURA_CONFIGS.sort(key=lambda x:int(x.replace(".","" if len(x)>3 else "0")))
     CURA_USER_MAT_DIR = os.path.join(CURA_USER_DIR, CURA_CONFIGS[-1], 'materials')
 
@@ -98,7 +99,8 @@ if platform.system() == 'Windows':
 elif platform.system() == 'Darwin': # OS X
     # Get Cura User Directory
     CURA_USER_DIR = str(Path.home()) + '/Library/Application Support/cura/'
-    CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir()]
+
+    CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir() and matchCuraVerNum.match(f.name)]
     CURA_CONFIGS.sort(key=lambda x:int(x.replace(".","" if len(x)>3 else "0")))
     CURA_USER_MAT_DIR = os.path.join(CURA_USER_DIR, CURA_CONFIGS[-1], 'materials')
     
@@ -108,12 +110,14 @@ elif platform.system() == 'Darwin': # OS X
 elif platform.system() == 'Linux':
     # Get Cura User Directory
     CURA_USER_DIR = str(Path.home()) + '/.local/share/cura/'
-    CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir()]
+    CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir() and matchCuraVerNum.match(f.name)]
     CURA_CONFIGS.sort(key=lambda x:int(x.replace(".","" if len(x)>3 else "0")))
+    print(CURA_CONFIGS)
+    print(CURA_CONFIGS[-1])
     CURA_USER_MAT_DIR = os.path.join(CURA_USER_DIR, CURA_CONFIGS[-1], 'materials')
     
     # Set Cura Install Directory
-    CURA_MAT_DIR = ''
+    CURA_MAT_DIR = str(Path.home()) + '/opt/UM/materials' # set a sensible default where AppInfo set can be placed
 
 else:
     print('Unknown operating system. To override, remove the exit(1) command from the CuraMaterial script.')
@@ -128,11 +132,15 @@ print('System Material Directory: ', CURA_MAT_DIR)
 #|              Classes              |
 # \---------------------------------/
 class curaMaterial():
-    def __init__(self, brand:str, material:str, color:str, guid:str):
+    def __init__(self, brand:str, material:str, color:str, label:str, guid:str, diameter:str):
         self.brand = brand
         self.material = material
         self.color = color
-        self.guid = guid
+        self.label = label #Label is used for custom materials. Without they are indistinguishable
+        self.guid = guid 
+        self.diameter = diameter 
+        #Might as well process this once if we want to sort on it.
+        self.allInfo = brand + ':' + material + ' ' + label + ' (' + color + ')' 
 
 
 
@@ -141,8 +149,8 @@ class curaMaterial():
 # \---------------------------------/
 def read_material(cm):
     '''Reads a cura material profile (.xml.fdm_material) and returns a curaMaterial object'''
-    brand = material = color = guid = ''
-    found = [False]*4 # Corresponds with above values. True once that value is found.
+    brand = material = color = label = guid = diameter = ''
+    found = [False]*6 # Corresponds with above values. True once that value is found.
     with open(cm, 'r') as f:
         for line in f:
             if all(found):
@@ -174,34 +182,70 @@ def read_material(cm):
                         break
                 found[2] = True
                 continue
-            if '<GUID>' in line and not found[3]:
-                guid = re.split('<|>| ', line.strip())[2]
+            if '<label>' in line and not found[3]:
+                data = re.split('<|>| ', line.strip())
+                for l in data[2:]:
+                    if l != '/label':
+                        label += l
+                    else:
+                        break
                 found[3] = True
                 continue
-    return curaMaterial(brand, material, color, guid)
+            if '<GUID>' in line and not found[4]:
+                guid = re.split('<|>| ', line.strip())[2]
+                found[4] = True
+                continue
 
-def get_all_materials():
+            if '<diameter>' in line and not found[5]:
+                diameter = re.split('<|>| ', line.strip())[2]
+                print(diameter)
+                found[5] = True
+                continue
+    return curaMaterial(brand, material, color, label, guid, diameter)
+
+def sortKey(e):
+    return e.allInfo
+
+def add_if_match(mList, mDia, root, file, filtStr, matDia):
+    if file.endswith('.xml.fdm_material'):
+        mat = read_material(os.path.join(root, file))
+        mDia["All"].append(mat)
+        mDia.setdefault(mat.diameter,[])
+        mDia[mat.diameter].append(mat)
+
+        if not any(ele.isupper() for ele in filtStr):
+            matToSearch=mat.allInfo.lower()
+        else:
+            matToSearch=mat.allInfo
+        filamentMatcher = re.compile(filtStr)
+        if filamentMatcher.search(matToSearch) and (mat.diameter == matDia or "All" == matDia):
+            mList.append(mat)
+        else:
+            print(mat)
+
+def get_all_materials(filtStr = "", matDia = "All"):
     '''Reads all system and user cura materials, and returns a list of curaMaterial objects'''
     mList = [] # List of materials
     sList = [] # List of material names for QT combobox
+    mDia = {"All":[]}  # Dict of material diameters
 
     for root, _, files in os.walk(CURA_USER_MAT_DIR):
         for file in files:
-            if file.endswith('.xml.fdm_material'):
-                mList.append(read_material(os.path.join(root, file)))
+            add_if_match(mList, mDia, root, file, filtStr, matDia)
+
     for root, _, files in os.walk(CURA_MAT_DIR):
         for file in files:
-            if file.endswith('.xml.fdm_material'):
-                mList.append(read_material(os.path.join(root, file)))
-    
-    for mat in mList:
-        sList.append(mat.brand + ':' + mat.material + ' (' + mat.color + ')')
+            add_if_match(mList, mDia, root, file, filtStr, matDia)
+    mList.sort(key=sortKey)
 
-    return mList, sList
+    for mat in mList:
+        sList.append(mat.allInfo)
+
+    return mList, sList, mDia
 
 if __name__ == '__main__':
     # If run directly, list installed materials
-    materials, _ = get_all_materials()
+    materials, qt_materials, _ = get_all_materials()
     for material in materials:
         print('Material: ', material.brand, '/', material.material, '\t', material.color)
         print('\t', material.guid)
