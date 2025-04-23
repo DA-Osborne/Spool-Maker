@@ -51,10 +51,18 @@ if platform.system() == 'Windows':
         fList = [k for k in curaList if 'Ultimaker Cura' in k]
         fList.sort()
         return fList[-1]
+
+    def is_number(s):
+        try:
+            float(s)  # Try converting to a float to handle both integers and decimals
+            return True
+        except ValueError:
+            return False
     
     # Get Cura User Directory
     CURA_USER_DIR = os.path.join(os.getenv('APPDATA'), 'cura')
     CURA_CONFIGS = [f.name for f in os.scandir(CURA_USER_DIR) if f.is_dir()]
+    CURA_CONFIGS = [config for config in CURA_CONFIGS if is_number(config)]        # Remove any non-number values from list of cura configs
     CURA_CONFIGS.sort(key=lambda x:int(x.replace(".","" if len(x)>3 else "0")))
     CURA_USER_MAT_DIR = os.path.join(CURA_USER_DIR, CURA_CONFIGS[-1], 'materials')
 
